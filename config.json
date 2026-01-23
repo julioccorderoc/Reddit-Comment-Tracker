@@ -1,0 +1,11 @@
+{
+    "strategy_params": {
+        "last_days": 7,
+        "manual_range": {
+            "start_date": "2023-01-01",
+            "end_date": "2023-01-31"
+        }
+    },
+    "safety_limit": 500,
+    "deep_fetch_replies": false
+}

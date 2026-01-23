@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+# folders
+output/
+
+# testing files
+webhook_testing.py
+check_in.py
+reddit_comment_tracker.py
