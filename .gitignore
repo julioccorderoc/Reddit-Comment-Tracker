@@ -17,3 +17,4 @@ output/
 webhook_testing.py
 check_in.py
 reddit_comment_tracker.py
+.DS_Store

@@ -21,3 +21,12 @@ class CommentSchema(BaseModel):
     @field_validator('subreddit', mode='before')
     def parse_subreddit(cls, v):
         return str(v)
+
+class ProfileStats(BaseModel):
+    date: str
+    handle: str
+    total_karma: int
+    comment_karma: int
+    link_karma: int
+    account_age_days: int
+    is_mod: bool
