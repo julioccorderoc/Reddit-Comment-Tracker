@@ -2,15 +2,16 @@ import logging
 import os
 import csv
 import json
+import uuid
 import requests
-from datetime import datetime, timedelta, timezone, time
-from typing import Tuple, Dict, Any, List
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List
 
 # --- 1. Centralized Logger ---
 def setup_logging(level=logging.INFO):
     """Configures the root logger once."""
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s | [%(levelname)s] | %(name)s | %(funcName)s(%(filename)s:%(lineno)d): %(message)s",
         datefmt='%Y-%m-%d %H:%M:%S'
     )
@@ -57,30 +58,64 @@ def save_to_csv(flat_data: List[Dict[str, Any]], filename: str):
     except Exception as e:
         logger.error(f"Failed to save CSV: {e}")
 
+# --- Envelope Builder ---
+def build_envelope(
+    pipeline: str,
+    data: List[Dict[str, Any]],
+    profile_count: int,
+    record_count: Optional[int] = None,
+    window: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    """
+    Wraps a data payload in a standard envelope for webhook dispatch.
+
+    :param pipeline: "comments", "posts", or "karma"
+    :param data: The records to send (already filtered, if dedup is active)
+    :param profile_count: Number of profiles processed in this run
+    :param record_count: Total records collected before any dedup filter.
+                         Defaults to len(data) when dedup is not yet active.
+    :param window: {"start": ISO string, "end": ISO string} — only for timed pipelines
+    """
+    actual_record_count = record_count if record_count is not None else len(data)
+    envelope: Dict[str, Any] = {
+        "run_id": str(uuid.uuid4()),
+        "extracted_at": datetime.now(timezone.utc).isoformat(),
+        "pipeline": pipeline,
+        "profile_count": profile_count,
+        "record_count": actual_record_count,
+        "new_record_count": len(data),
+        "data": data,
+    }
+    if window is not None:
+        envelope["window"] = window
+    return envelope
+
 # --- Webhook Logic ---
-def send_webhook(url: str, payload: Dict[str, Any]):
+def send_webhook(url: str, payload: Dict[str, Any]) -> bool:
     """
     Sends the analysis results to the specified Webhook URL.
+    Returns True on success, False on any failure.
     """
     if not url:
         logger.warning("⚠️ Webhook URL is empty. Skipping sending.")
-        return
+        return False
 
     logger.info(f"🚀 Sending payload to Webhook...")
-    
+
     try:
         # We send the data as a JSON POST request
         response = requests.post(
-            url, 
-            json=payload, 
+            url,
+            json=payload,
             headers={"Content-Type": "application/json"},
             timeout=30  # 30-second timeout to prevent hanging
         )
-        
+
         # Check for HTTP errors (4xx or 5xx)
         response.raise_for_status()
-        
+
         logger.info(f"✅ Webhook sent successfully! (Status: {response.status_code})")
+        return True
 
     except requests.exceptions.Timeout:
         logger.error("❌ Webhook failed: Request timed out.")
@@ -90,3 +125,4 @@ def send_webhook(url: str, payload: Dict[str, Any]):
         logger.error(f"❌ Webhook failed: Server returned error {e.response.status_code}.")
     except Exception as e:
         logger.error(f"❌ Webhook failed: Unexpected error {e}")
+    return False

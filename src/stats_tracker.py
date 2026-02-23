@@ -5,7 +5,7 @@ from typing import List
 from dotenv import load_dotenv
 
 from src.models import ProfileStats
-from src.utils import get_logger, save_to_json, save_to_csv, send_webhook
+from src.utils import get_logger, save_to_json, save_to_csv, send_webhook, build_envelope
 
 logger = get_logger(__name__)
 
@@ -78,7 +78,12 @@ class RedditStatsTracker:
             # Send Webhook
             webhook_url = os.getenv("KARMA_WEBHOOK_URL")
             if webhook_url:
-                send_webhook(webhook_url, collected_stats)
+                envelope = build_envelope(
+                    pipeline="karma",
+                    data=collected_stats,
+                    profile_count=len(profiles),
+                )
+                send_webhook(webhook_url, envelope)
             else:
                 logger.info("Skipping Webhook (KARMA_WEBHOOK_URL not set)")
 

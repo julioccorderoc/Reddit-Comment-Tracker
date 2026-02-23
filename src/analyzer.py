@@ -5,8 +5,9 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 
 from src.models import CommentSchema
-from src.utils import get_logger, save_to_json, save_to_csv, send_webhook
+from src.utils import get_logger, save_to_json, save_to_csv, send_webhook, build_envelope
 from src.date_strategies import DateStrategy
+from src.deduplicator import SeenStore
 
 logger = get_logger(__name__)
 
@@ -58,6 +59,7 @@ class RedditAnalyzer:
                     subreddit=str(praw_comment.subreddit),
                     score=praw_comment.score,
                     reply_count=reply_count,
+                    is_top_level=praw_comment.parent_id.startswith("t3_"),
                     created_utc=praw_comment.created_utc,
                     created_iso=comment_date.isoformat(),
                     permalink=f"https://reddit.com{praw_comment.permalink}"
@@ -100,6 +102,19 @@ class RedditAnalyzer:
         save_to_csv(all_comments_data, f"reddit_data_{timestamp}.csv")
 
         if os.getenv("WEBHOOK_URL"):
-            send_webhook(os.getenv("WEBHOOK_URL"), all_comments_data)
+            store = SeenStore()
+            new_records = store.filter_new("comments", all_comments_data)
+            envelope = build_envelope(
+                pipeline="comments",
+                data=new_records,
+                profile_count=len(profiles),
+                record_count=len(all_comments_data),
+                window={
+                    "start": start_dt.isoformat(),
+                    "end": end_dt.isoformat(),
+                },
+            )
+            if send_webhook(os.getenv("WEBHOOK_URL"), envelope):
+                store.mark_sent("comments", new_records)
         
         logger.info("Job Complete.")
