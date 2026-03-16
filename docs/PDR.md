@@ -62,12 +62,14 @@ All output is saved to `output/` as JSON and CSV, then POSTed to a configured n8
 | `permalink` | string | `submission.permalink` | Full Reddit URL |
 
 **Implementation path:**
+
 - Add `PostSchema` to `src/models.py`
 - Create `src/post_analyzer.py` mirroring the structure of `src/analyzer.py`, using `redditor.submissions.new(limit=N)` instead of `redditor.comments.new()`
 - Create `track_posts.py` entry point, reusing the same date strategy and config structure
-- Uses a dedicated `POSTS_WEBHOOK_URL` env variable (separate from `WEBHOOK_URL`)
+- Uses a dedicated `POSTS_WEBHOOK_URL` env variable (separate from `COMMENT_WEBHOOK_URL`)
 
 **Acceptance criteria:**
+
 - Running `uv run python track_posts.py` fetches posts for all `TARGET_PROFILES` within the active date window
 - Output is saved to `output/reddit_posts_YYYY-MM-DD_HHMMSS.{json,csv}`
 - Payload is sent to the configured webhook
@@ -82,6 +84,7 @@ All output is saved to `output/` as JSON and CSV, then POSTed to a configured n8
 **Proposed approach:** A local state file at `output/seen_ids.json` tracks all comment and post IDs that have already been dispatched to the webhook. Before sending, the tracker filters out any records whose ID is already in the state file. After a successful webhook dispatch, the new IDs are appended.
 
 **State file structure:**
+
 ```json
 {
   "comments": ["abc123", "def456"],
@@ -90,11 +93,13 @@ All output is saved to `output/` as JSON and CSV, then POSTed to a configured n8
 ```
 
 **Behavior:**
+
 - State is checked before webhook dispatch (not before saving to local JSON/CSV — local files always get the full result)
 - If the webhook call fails, the IDs are **not** added to the state file (records will retry on the next run)
 - State file is gitignored alongside the rest of `output/`
 
 **Acceptance criteria:**
+
 - Running the tracker twice in the same date window sends new records only on the second run
 - A failed webhook does not mark records as seen
 - State file is created automatically if it doesn't exist
@@ -122,10 +127,12 @@ No additional API calls required.
 | `is_top_level` | bool | `True` if replying to a post, `False` if replying to a comment |
 
 **What this enables downstream:**
+
 - Segment comments by contribution type (standalone vs conversation)
 - Measure what share of activity is direct community engagement vs follow-up replies
 
 **Acceptance criteria:**
+
 - `is_top_level` is present on every `CommentSchema` object
 - Derived from `parent_id` with no extra API calls
 - Correctly reflects top-level vs nested position in thread
@@ -168,6 +175,7 @@ No additional API calls required.
 **Note:** The karma pipeline wraps its array in the same envelope, using `"pipeline": "karma"` and omitting `window`.
 
 **Acceptance criteria:**
+
 - Every webhook call is wrapped in this envelope
 - `record_count` and `new_record_count` are accurate
 - Existing `data` array structure is unchanged (no breaking change for n8n)
@@ -204,6 +212,6 @@ The following were considered but are not in scope for this iteration:
 
 | # | Question | Owner |
 |---|---|---|
-| 1 | ~~Should posts share the existing `WEBHOOK_URL` or use a dedicated `POSTS_WEBHOOK_URL`?~~ **Decided:** dedicated `POSTS_WEBHOOK_URL`. | — |
+| 1 | ~~Should posts share the existing `COMMENT_WEBHOOK_URL` or use a dedicated `POSTS_WEBHOOK_URL`?~~ **Decided:** dedicated `POSTS_WEBHOOK_URL`. | — |
 | 2 | ~~Should `seen_ids.json` be reset on a cadence (e.g., monthly) to avoid unbounded growth?~~ **Decided:** no reset, grow indefinitely for simplicity. | — |
 | 3 | ~~What is the `safety_limit` for posts?~~ **Decided:** `20` posts per profile. | — |

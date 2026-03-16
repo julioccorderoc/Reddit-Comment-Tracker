@@ -101,7 +101,7 @@ class RedditAnalyzer:
         save_to_json(all_comments_data, f"reddit_data_{timestamp}.json")
         save_to_csv(all_comments_data, f"reddit_data_{timestamp}.csv")
 
-        if os.getenv("WEBHOOK_URL"):
+        if os.getenv("COMMENT_WEBHOOK_URL"):
             store = SeenStore()
             new_records = store.filter_new("comments", all_comments_data)
             envelope = build_envelope(
@@ -114,7 +114,7 @@ class RedditAnalyzer:
                     "end": end_dt.isoformat(),
                 },
             )
-            if send_webhook(os.getenv("WEBHOOK_URL"), envelope):
+            if send_webhook(os.getenv("COMMENT_WEBHOOK_URL"), envelope):
                 store.mark_sent("comments", new_records)
         
         logger.info("Job Complete.")

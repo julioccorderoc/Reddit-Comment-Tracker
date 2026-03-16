@@ -66,8 +66,15 @@
 * **Verification Criteria (Definition of Done):**
   * `uv run python track_posts.py` fetches posts for all `TARGET_PROFILES` within the active date window.
   * Output files are written to `output/` with the correct naming convention.
-  * Payload is dispatched to `POSTS_WEBHOOK_URL` (separate from `WEBHOOK_URL`).
+  * Payload is dispatched to `POSTS_WEBHOOK_URL` (separate from `COMMENT_WEBHOOK_URL`).
   * Envelope `pipeline` field reads `"posts"`.
   * Deduplication applies: consecutive runs in the same window send only new posts.
   * Post fetch is capped at `20` per profile (hardcoded, separate from the comment `safety_limit`).
   * Existing comment and karma pipelines are unaffected.
+
+## Future / Next Steps
+
+1. **Unified Webhook Routing:** Consolidate to a single webhook URL pointing to n8n, using a single field in the payload to let n8n route to the correct logic.
+2. **Unified Weekly Script:** Create one script for the weekly update that fetches both comments and posts simultaneously.
+3. **Enhanced Post Context:** Include more data about the post, capturing the whole thread including comments, metadata, and performance metrics.
+4. **Automation / Cron Scheduling:** Make the execution fully automatic based on a set schedule: the weekly update (Monday) and the karma snapshot (Monday, Wednesday, Friday).

@@ -22,7 +22,7 @@ uv sync
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USER_AGENT=your_user_agent_string
-WEBHOOK_URL=https://your-n8n-instance/webhook/comments
+COMMENT_WEBHOOK_URL=https://your-n8n-instance/webhook/comments
 POSTS_WEBHOOK_URL=https://your-n8n-instance/webhook/posts
 KARMA_WEBHOOK_URL=https://your-n8n-instance/webhook/karma
 TARGET_PROFILES=username1,username2,username3
@@ -48,7 +48,7 @@ TARGET_PROFILES=username1,username2,username3
 
 ### Comment Tracker
 
-Fetches comments for each profile in `TARGET_PROFILES` within a configurable date window, deduplicates against previously sent records, saves JSON and CSV to `output/`, and POSTs to `WEBHOOK_URL`.
+Fetches comments for each profile in `TARGET_PROFILES` within a configurable date window, deduplicates against previously sent records, saves JSON and CSV to `output/`, and POSTs to `COMMENT_WEBHOOK_URL`.
 
 ```bash
 uv run python track_comments.py
@@ -176,7 +176,7 @@ All files are written to `output/` (gitignored):
 | `REDDIT_CLIENT_ID` | Reddit app client ID |
 | `REDDIT_CLIENT_SECRET` | Reddit app client secret |
 | `REDDIT_USER_AGENT` | Reddit API user agent string |
-| `WEBHOOK_URL` | n8n webhook endpoint for comment data |
+| `COMMENT_WEBHOOK_URL` | n8n webhook endpoint for comment data |
 | `POSTS_WEBHOOK_URL` | n8n webhook endpoint for post data |
 | `KARMA_WEBHOOK_URL` | n8n webhook endpoint for karma stats |
 | `TARGET_PROFILES` | Comma-separated Reddit usernames to track |

@@ -76,14 +76,14 @@ class RedditStatsTracker:
             save_to_csv(collected_stats, f"karma_stats_{timestamp}.csv")
             
             # Send Webhook
-            webhook_url = os.getenv("KARMA_WEBHOOK_URL")
-            if webhook_url:
+            COMMENT_WEBHOOK_URL = os.getenv("KARMA_WEBHOOK_URL")
+            if COMMENT_WEBHOOK_URL:
                 envelope = build_envelope(
                     pipeline="karma",
                     data=collected_stats,
                     profile_count=len(profiles),
                 )
-                send_webhook(webhook_url, envelope)
+                send_webhook(COMMENT_WEBHOOK_URL, envelope)
             else:
                 logger.info("Skipping Webhook (KARMA_WEBHOOK_URL not set)")
 

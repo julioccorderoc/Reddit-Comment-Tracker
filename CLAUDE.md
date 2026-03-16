@@ -27,7 +27,7 @@ Two configuration surfaces:
 **`.env`** — credentials and targets (never commit):
 
 - `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` — PRAW credentials
-- `WEBHOOK_URL` — n8n webhook for comment data
+- `COMMENT_WEBHOOK_URL` — n8n webhook for comment data
 - `POSTS_WEBHOOK_URL` — n8n webhook for post data
 - `KARMA_WEBHOOK_URL` — n8n webhook for karma stats
 - `TARGET_PROFILES` — comma-separated Reddit usernames to track
@@ -45,7 +45,7 @@ Three independent pipelines share the same `src/` library:
 
 ### Comment Tracker (`track_comments.py` → `src/analyzer.py`)
 
-Fetches comments for each profile in `TARGET_PROFILES` within a date window, deduplicates against the seen-IDs store, wraps results in a standard envelope, saves to `output/` as JSON and CSV, then POSTs to `WEBHOOK_URL`.
+Fetches comments for each profile in `TARGET_PROFILES` within a date window, deduplicates against the seen-IDs store, wraps results in a standard envelope, saves to `output/` as JSON and CSV, then POSTs to `COMMENT_WEBHOOK_URL`.
 
 Date windowing uses the **Strategy pattern** (`src/date_strategies.py`):
 
